@@ -1,25 +1,25 @@
 $(document).ready(function(){
 
-  var $vid = $('#webdoc-video')[0],
-  $body = $('body'),
-  pause = $('#webdoc-part1').data('to'),
-  $points = $('.webdoc-pointVideo'),
-  $first = $('#webdoc-part1'),
-  $partContainerText = $('#webdoc-content'),
-  $partText = $('#webdoc-text'),
-  $partTitle = $('#webdoc-title'),
-  classHidden = 'webdoc-hidden',
-  classBodyHidden = 'webdoc-inactive';
+  var $vid = $('#webdoc-video')[0], //Video object
+  $body = $('body'), //Body
+  pause, //First pause param
+  $points = $('.webdoc-pointVideo'), //All points
+  $first = $('#webdoc-part1'), //First point
+  $partContainerText = $('#webdoc-content'), //Slides container
+  classHidden = 'webdoc-hidden', //Class toggle slide
+  classBodyHidden = 'webdoc-inactive'; //Class toggle body
 
-  var bindVideo = function($point,text,title){
+  var bindVideo = function($point,$id){
+
+    //Listen video progress until to data and unbind event
     $('#webdoc-video').bind('timeupdate',function(evt){
-      setText(title,text);
       var pointActive = $('.webdoc-pointActive');
-      console.log('Time',$(this)[0].currentTime,' & pause : ',pause);
+      setText($id);
       if($(this)[0].currentTime >= pause) {
         $(this)[0].pause();
         $(this).unbind(evt);
         var next = $($point).next('.webdoc-pointVideo');
+        //Go to next point if isn't last one
         if(next.length){
           activePoint(next);
         }else{
@@ -31,7 +31,7 @@ $(document).ready(function(){
 
   var toggle = function(status){
     var $ele = $partContainerText;
-    console.log($partContainerText);
+    //Toggle visibility of slide text depending on status param
     if(status == 'hide' && !$ele.hasClass(classHidden)){
       $ele.addClass(classHidden);
     }else if(status == 'show' && $ele.hasClass(classHidden)){
@@ -42,34 +42,39 @@ $(document).ready(function(){
         $body.addClass(classBodyHidden);
       }else{
         $ele.removeClass(classHidden);
+        $body.removeClass(classBodyHidden);
       }
     }
   }
 
   var activePoint = function($point){
     
+    //Add class active to current li
     $points.removeClass('webdoc-pointActive');
     $point.addClass('webdoc-pointActive');
 
-    var id = $point.attr('id'),
-    text = $point.data('text'),
-    title = $point.data('title'),
+    //Retrieve data params from point
+    var id = $point[0].id,
     from = $point.data('from');
-    info = $point.data('info');
     pause = $point.data('to');
 
+    //Move video to data from point
     $vid.currentTime = parseInt(from);
-    bindVideo($point,text,title);
+
+    bindVideo($point,id);
+    
     if($vid.paused) {
       $vid.play();
     }
   }
 
-  var setText = function(title,text){
-    $partText.html(text);
-    $partTitle.html(title);
+  var setText = function($id){
+    //Add class active to current slide
+    $('.webdoc-slide').addClass('webdoc-hidden');
+    $('.'+$id+'Slide').removeClass('webdoc-hidden');
   }
 
+  //Verify if click is outside timeline and toggle slide visibility
   $(document).on('click','#webdoc-overlay',function(event){
     var $target = $(event.target);
     if(!$target.hasClass('webdoc-timelineContainer') && !$target.hasClass('webdoc-pointVideo')){
@@ -77,10 +82,14 @@ $(document).ready(function(){
     }
   });
 
+  //Active point on click
   $('.webdoc-pointVideo').on('click',function(){
     activePoint($(this));
   });
 
-  bindVideo($first,$first.data('text'),$first.data('title'));
+  var init = function(){
+    activePoint($first);
+    $body.addClass(classBodyHidden);
+  }
 
 });
